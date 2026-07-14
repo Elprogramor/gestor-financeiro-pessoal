@@ -245,7 +245,7 @@ class CloudService extends EventTarget {
     window.addEventListener("offline", () => this.#setStatus("offline", "Alterações salvas neste dispositivo"));
   }
 
-  async syncNow({ initial = false } = {}) {
+  async syncNow({ initial = false, quiet = false } = {}) {
     if (!this.isConfigured() || this.#syncing) return false;
     const client = await this.initialize();
     if (!this.#session) await this.getSession();
@@ -256,7 +256,7 @@ class CloudService extends EventTarget {
     }
 
     this.#syncing = true;
-    this.#setStatus("syncing", initial ? "Carregando seus dados" : "Sincronizando alterações");
+    if (!quiet) this.#setStatus("syncing", initial ? "Carregando seus dados" : "Sincronizando alterações");
     try {
       const userId = this.#session.user.id;
       const [{ data: profile, error: profileError }, { data: remoteRows, error: recordsError }] = await Promise.all([
@@ -293,10 +293,13 @@ class CloudService extends EventTarget {
     const pending = this.#readQueue().operations;
     const collections = Object.fromEntries(COLLECTIONS.map((name) => [name, storage.getCollection(name)]));
     let changed = false;
+    let settingsChanged = false;
+    const changedCollections = new Set();
 
     if (profile?.settings && !pending.profile) {
       collections.__settings = { ...local.settings, ...profile.settings };
-      changed = JSON.stringify(collections.__settings) !== JSON.stringify(local.settings);
+      settingsChanged = JSON.stringify(collections.__settings) !== JSON.stringify(local.settings);
+      changed = settingsChanged;
     }
 
     const remoteKeys = new Set();
@@ -316,6 +319,7 @@ class CloudService extends EventTarget {
         if (current && remoteTime >= localTime) {
           list.splice(index, 1);
           changed = true;
+          changedCollections.add(localCollection);
         } else if (current && localTime > remoteTime) {
           this.#queueOperation(key, {
             type: "record", action: "upsert", collection: localCollection, id: current.id,
@@ -325,12 +329,22 @@ class CloudService extends EventTarget {
         continue;
       }
 
-      const payload = row.payload && typeof row.payload === "object" ? { ...row.payload, id: row.record_id } : null;
+      const payload = row.payload && typeof row.payload === "object"
+        ? {
+            ...row.payload,
+            id: row.record_id,
+            createdAt: row.payload.createdAt || row.client_updated_at || isoNow(),
+            // Usa o relógio de sincronização da linha quando o registro antigo não possui updatedAt.
+            // Isso impede que o mesmo dado seja reaplicado em todos os ciclos de polling.
+            updatedAt: row.client_updated_at || row.payload.updatedAt || row.payload.createdAt || isoNow()
+          }
+        : null;
       if (!payload) continue;
       if (!current || remoteTime > localTime) {
         if (index >= 0) list[index] = payload;
         else list.push(payload);
         changed = true;
+        changedCollections.add(localCollection);
       } else if (localTime > remoteTime) {
         this.#queueOperation(key, {
           type: "record", action: "upsert", collection: localCollection, id: current.id,
@@ -364,9 +378,16 @@ class CloudService extends EventTarget {
       } finally {
         this.#applyingRemote = false;
       }
-      this.dispatchEvent(new CustomEvent("data:applied"));
+      this.dispatchEvent(new CustomEvent("data:applied", {
+        detail: {
+          collections: [...changedCollections],
+          settingsChanged
+        }
+      }));
     }
-    this.#scheduleSync();
+    // Só agenda outra rodada quando a mesclagem realmente criou operações pendentes.
+    // Agendar incondicionalmente aqui causava um ciclo infinito a cada 700 ms.
+    if (this.getPendingCount()) this.#scheduleSync();
   }
 
   async #flushQueue() {
@@ -463,14 +484,14 @@ class CloudService extends EventTarget {
     const userId = this.#session.user.id;
     const schedulePull = () => {
       clearTimeout(this.#pullTimer);
-      this.#pullTimer = setTimeout(() => this.syncNow().catch(() => {}), 450);
+      this.#pullTimer = setTimeout(() => this.syncNow({ quiet: true }).catch(() => {}), 450);
     };
     this.#realtimeChannel = this.#client.channel(`fluxo-${userId}`)
       .on("postgres_changes", { event: "*", schema: "public", table: "finance_records", filter: `user_id=eq.${userId}` }, schedulePull)
       .on("postgres_changes", { event: "*", schema: "public", table: "finance_profiles", filter: `user_id=eq.${userId}` }, schedulePull)
       .subscribe();
     this.#pollTimer = setInterval(() => {
-      if (document.visibilityState === "visible" && navigator.onLine) this.syncNow().catch(() => {});
+      if (document.visibilityState === "visible" && navigator.onLine) this.syncNow({ quiet: true }).catch(() => {});
     }, 60_000);
   }
 
@@ -530,7 +551,7 @@ class CloudService extends EventTarget {
 
   #scheduleSync() {
     clearTimeout(this.#syncTimer);
-    if (!this.#session || !navigator.onLine) return;
+    if (!this.#session || !navigator.onLine || !this.getPendingCount()) return;
     this.#syncTimer = setTimeout(() => this.syncNow().catch(() => {}), 700);
   }
 

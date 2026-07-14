@@ -1,4 +1,4 @@
-const CACHE_NAME = "fluxo-app-v2.1.0";
+const CACHE_NAME = "fluxo-app-v2.2.0";
 const APP_SHELL = [
   "./",
   "./index.html",
@@ -8,9 +8,9 @@ const APP_SHELL = [
   "./css/forms.css",
   "./css/tables.css",
   "./css/responsive.css",
-  "./js/app.js",
+  "./js/app.js?v=2.2.0",
   "./js/storage.js",
-  "./js/cloud.js",
+  "./js/cloud.js?v=2.2.0",
   "./js/dashboard.js",
   "./js/finance.js",
   "./js/goals.js",

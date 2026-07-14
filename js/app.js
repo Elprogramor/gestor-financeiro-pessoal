@@ -4,7 +4,7 @@
  */
 
 import { renderDashboard, renderEvolution, renderProductivity, renderStats } from "./dashboard.js";
-import { cloud } from "./cloud.js";
+import { cloud } from "./cloud.js?v=2.2.0";
 import { storage } from "./storage.js";
 import { ui } from "./ui.js";
 import { applyTranslations, debounce, hashPassword, randomSalt } from "./utils.js";
@@ -15,6 +15,8 @@ class FinanceApp {
   #inactivityTimer = null;
   #systemThemeMedia = matchMedia("(prefers-color-scheme: dark)");
   #lastAuthEmail = "";
+  #backgroundRefreshTimer = null;
+  #pendingBackgroundRefresh = false;
 
   constructor() {
     storage.load();
@@ -221,7 +223,7 @@ class FinanceApp {
     if (this.#route === route) this.renderRoute(route);
   }
 
-  renderRoute(route = this.#route) {
+  renderRoute(route = this.#route, { silent = false, preserveScroll = false } = {}) {
     if (!this.#authenticated) return;
     this.#route = route;
     ui.setPageMeta(route);
@@ -229,17 +231,58 @@ class FinanceApp {
     document.body.classList.remove("mobile-menu-open");
     const container = document.getElementById("page-container");
     const skeleton = document.getElementById("skeleton");
-    container.classList.add("is-hidden");
-    skeleton.classList.remove("is-hidden");
+    const scrollPosition = preserveScroll ? { x: window.scrollX, y: window.scrollY } : null;
+    const previousHeight = preserveScroll ? container.getBoundingClientRect().height : 0;
+
+    // Atualizações vindas da nuvem não exibem skeleton nem escondem a página.
+    // A altura mínima temporária evita que o navegador reduza o documento e leve o scroll ao topo.
+    if (preserveScroll && previousHeight > 0) container.style.minHeight = `${previousHeight}px`;
+    if (!silent) {
+      container.classList.add("is-hidden");
+      skeleton.classList.remove("is-hidden");
+    }
 
     const view = this.getView(route);
     requestAnimationFrame(() => {
       container.innerHTML = view.html;
-      skeleton.classList.add("is-hidden");
-      container.classList.remove("is-hidden");
-      container.focus({ preventScroll: true });
+      if (!silent) {
+        skeleton.classList.add("is-hidden");
+        container.classList.remove("is-hidden");
+        container.focus({ preventScroll: true });
+      }
       view.afterRender?.();
+
+      if (scrollPosition) {
+        window.scrollTo(scrollPosition.x, scrollPosition.y);
+        requestAnimationFrame(() => {
+          window.scrollTo(scrollPosition.x, scrollPosition.y);
+          container.style.minHeight = "";
+        });
+      }
     });
+  }
+
+  scheduleBackgroundRefresh(detail = {}) {
+    if (!this.#authenticated) return;
+    this.#pendingBackgroundRefresh = true;
+    clearTimeout(this.#backgroundRefreshTimer);
+    this.#backgroundRefreshTimer = setTimeout(() => {
+      const modalOpen = Boolean(document.getElementById("modal-root")?.children.length);
+      const page = document.getElementById("page-container");
+      const activeElement = document.activeElement;
+      const editingPageField = page?.contains(activeElement)
+        && ["INPUT", "TEXTAREA", "SELECT"].includes(activeElement?.tagName);
+
+      // Não interrompe digitação, filtros ou formulários. A atualização fica pendente
+      // e será aplicada assim que o usuário sair do campo/modal.
+      if (modalOpen || editingPageField) {
+        this.#backgroundRefreshTimer = setTimeout(() => this.scheduleBackgroundRefresh(detail), 700);
+        return;
+      }
+
+      this.#pendingBackgroundRefresh = false;
+      this.renderRoute(this.#route, { silent: true, preserveScroll: true });
+    }, 160);
   }
 
   getView(route) {
@@ -285,6 +328,7 @@ class FinanceApp {
       if (closeElement) {
         event.preventDefault();
         ui.closeModal();
+        if (this.#pendingBackgroundRefresh) this.scheduleBackgroundRefresh();
         return;
       }
       const actionElement = event.target.closest("[data-action]");
@@ -345,10 +389,13 @@ class FinanceApp {
       ui.toast("Conta conectada e dados sincronizados.");
     });
     cloud.addEventListener("auth:signed-out", () => this.initializeAuth("Sessão encerrada. Entre novamente para sincronizar."));
-    cloud.addEventListener("data:applied", () => {
-      this.applySettings();
-      this.updateProfileUI();
-      if (this.#authenticated) this.renderRoute(this.#route);
+    cloud.addEventListener("data:applied", (event) => {
+      const detail = event.detail || {};
+      if (detail.settingsChanged) {
+        this.applySettings();
+        this.updateProfileUI();
+      }
+      this.scheduleBackgroundRefresh(detail);
     });
     cloud.addEventListener("status", (event) => this.updateSyncUI(event.detail));
     cloud.addEventListener("queue:changed", () => this.updateSyncUI(cloud.getState()));
