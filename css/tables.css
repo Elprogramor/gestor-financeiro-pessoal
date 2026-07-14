@@ -1,0 +1,30 @@
+.table-container { width: 100%; overflow-x: auto; }
+.data-table { width: 100%; border-collapse: collapse; white-space: nowrap; }
+.data-table th { height: 42px; padding: 0 14px; border-bottom: 1px solid var(--border); color: var(--text-faint); font-size: 9px; font-weight: 700; letter-spacing: .055em; text-align: left; text-transform: uppercase; }
+.data-table td { height: 55px; padding: 8px 14px; border-bottom: 1px solid var(--border); color: var(--text-soft); font-size: 11px; }
+.data-table tbody tr { transition: background var(--transition); }
+.data-table tbody tr:hover { background: var(--surface-2); }
+.data-table tbody tr:last-child td { border-bottom: 0; }
+.data-table td strong { color: var(--text); font-weight: 600; }
+.data-table .amount { font-weight: 700; font-variant-numeric: tabular-nums; }
+.data-table .amount--income { color: var(--success); }
+.data-table .amount--expense { color: var(--danger); }
+.data-table .balance { color: var(--text); font-weight: 600; font-variant-numeric: tabular-nums; }
+.transaction-type { width: 29px; height: 29px; display: grid; place-items: center; border-radius: 8px; background: var(--success-soft); color: var(--success); }
+.transaction-type--expense { background: var(--danger-soft); color: var(--danger); }
+.transaction-type svg { width: 14px; height: 14px; }
+.description-cell { display: flex; align-items: center; gap: 10px; }
+.description-cell__text { min-width: 0; }
+.description-cell__text strong { display: block; max-width: 230px; overflow: hidden; text-overflow: ellipsis; }
+.description-cell__text span { display: block; max-width: 230px; overflow: hidden; margin-top: 2px; color: var(--text-faint); font-size: 9px; text-overflow: ellipsis; }
+.table-actions { display: flex; justify-content: flex-end; gap: 2px; }
+.table-actions .icon-button { width: 28px; height: 28px; }
+.table-actions .icon-button svg { width: 14px; height: 14px; }
+.sort-button { display: inline-flex; align-items: center; gap: 5px; border: 0; background: transparent; color: inherit; padding: 0; cursor: pointer; text-transform: inherit; font-weight: inherit; letter-spacing: inherit; }
+.sort-button svg { width: 11px; height: 11px; }
+.table-pagination { display: flex; align-items: center; justify-content: space-between; gap: 12px; padding: 12px 14px; border-top: 1px solid var(--border); color: var(--text-faint); font-size: 9px; }
+.table-pagination__buttons { display: flex; gap: 5px; }
+.table-pagination .button { min-height: 30px; padding: 5px 9px; font-size: 10px; }
+.table-summary { display: grid; grid-template-columns: repeat(3, 1fr); gap: 12px; padding: 14px; border-bottom: 1px solid var(--border); background: var(--surface-2); }
+.table-summary__item span { display: block; color: var(--text-faint); font-size: 9px; }
+.table-summary__item strong { display: block; margin-top: 3px; font-family: var(--font-display); font-size: 14px; }

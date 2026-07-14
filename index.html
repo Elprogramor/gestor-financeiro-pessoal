@@ -1,0 +1,182 @@
+<!doctype html>
+<html lang="pt-BR" data-theme="light">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+  <meta name="theme-color" content="#0b0d12">
+  <meta name="description" content="Gestão financeira pessoal para profissionais autônomos, com funcionamento offline e sincronização segura entre dispositivos.">
+  <meta name="color-scheme" content="light dark">
+  <title>Fluxo — Gestão Financeira</title>
+  <link rel="manifest" href="./manifest.webmanifest">
+  <link rel="icon" href="./assets/icons/icon.svg" type="image/svg+xml">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Manrope:wght@600;700&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="./css/style.css">
+  <link rel="stylesheet" href="./css/dashboard.css">
+  <link rel="stylesheet" href="./css/forms.css">
+  <link rel="stylesheet" href="./css/tables.css">
+  <link rel="stylesheet" href="./css/responsive.css">
+</head>
+<body>
+  <noscript>
+    <div class="noscript">Este sistema precisa de JavaScript habilitado.</div>
+  </noscript>
+
+  <div id="auth-screen" class="auth-screen" aria-live="polite">
+    <div class="auth-card">
+      <div class="brand brand--auth">
+        <span class="brand__mark" aria-hidden="true">
+          <svg viewBox="0 0 32 32"><path d="M7 22.5 13.2 16l4 4L25 10"/><path d="M7 9.5v13h18"/></svg>
+        </span>
+        <span>Fluxo</span>
+      </div>
+      <div id="auth-content"></div>
+    </div>
+  </div>
+
+  <div id="app-shell" class="app-shell is-hidden">
+    <aside id="sidebar" class="sidebar" aria-label="Navegação principal">
+      <div class="sidebar__header">
+        <button class="brand" data-route="dashboard" aria-label="Ir para o painel">
+          <span class="brand__mark" aria-hidden="true">
+            <svg viewBox="0 0 32 32"><path d="M7 22.5 13.2 16l4 4L25 10"/><path d="M7 9.5v13h18"/></svg>
+          </span>
+          <span class="brand__name">Fluxo</span>
+        </button>
+        <button id="sidebar-collapse" class="icon-button sidebar__collapse" aria-label="Recolher menu" title="Recolher menu">
+          <svg viewBox="0 0 24 24"><path d="m15 18-6-6 6-6"/></svg>
+        </button>
+      </div>
+
+      <nav class="nav-list">
+        <span class="nav-group-label" data-i18n="nav.overview">Visão geral</span>
+        <button class="nav-item is-active" data-route="dashboard">
+          <svg viewBox="0 0 24 24"><rect x="3" y="3" width="7" height="7"/><rect x="14" y="3" width="7" height="7"/><rect x="3" y="14" width="7" height="7"/><rect x="14" y="14" width="7" height="7"/></svg>
+          <span data-i18n="nav.dashboard">Dashboard</span>
+        </button>
+        <button class="nav-item" data-route="cashflow">
+          <svg viewBox="0 0 24 24"><path d="M3 6h18M3 12h18M3 18h18"/><path d="M7 4v4M17 10v4M10 16v4"/></svg>
+          <span data-i18n="nav.cashflow">Fluxo de caixa</span>
+        </button>
+        <button class="nav-item" data-route="calendar">
+          <svg viewBox="0 0 24 24"><rect x="3" y="5" width="18" height="16" rx="2"/><path d="M16 3v4M8 3v4M3 10h18"/></svg>
+          <span data-i18n="nav.calendar">Calendário</span>
+        </button>
+
+        <span class="nav-group-label" data-i18n="nav.planning">Planejamento</span>
+        <button class="nav-item" data-route="goals">
+          <svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="9"/><circle cx="12" cy="12" r="5"/><circle cx="12" cy="12" r="1"/></svg>
+          <span data-i18n="nav.goals">Objetivos</span>
+        </button>
+        <button class="nav-item" data-route="debts">
+          <svg viewBox="0 0 24 24"><rect x="3" y="5" width="18" height="14" rx="2"/><path d="M3 10h18M7 15h4"/></svg>
+          <span data-i18n="nav.debts">Dívidas</span>
+        </button>
+        <button class="nav-item" data-route="monthly-goals">
+          <svg viewBox="0 0 24 24"><path d="M4 19V9M10 19V5M16 19v-7M22 19V3"/></svg>
+          <span data-i18n="nav.monthlyGoals">Metas mensais</span>
+        </button>
+
+        <span class="nav-group-label" data-i18n="nav.analysis">Análise</span>
+        <button class="nav-item" data-route="stats">
+          <svg viewBox="0 0 24 24"><path d="M4 19V9M10 19V5M16 19v-7M22 19V3"/></svg>
+          <span data-i18n="nav.stats">Estatísticas</span>
+        </button>
+        <button class="nav-item" data-route="evolution">
+          <svg viewBox="0 0 24 24"><path d="m3 17 5-5 4 4 8-9"/><path d="M14 7h6v6"/></svg>
+          <span data-i18n="nav.evolution">Minha evolução</span>
+        </button>
+        <button class="nav-item" data-route="productivity">
+          <svg viewBox="0 0 24 24"><path d="M12 2v20M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6"/></svg>
+          <span data-i18n="nav.productivity">Produtividade</span>
+        </button>
+      </nav>
+
+      <div class="sidebar__footer">
+        <button class="nav-item" data-route="settings">
+          <svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.7 1.7 0 0 0 .34 1.88l.06.06-2.83 2.83-.06-.06A1.7 1.7 0 0 0 15 19.4a1.7 1.7 0 0 0-1 .6 1.7 1.7 0 0 0-.4 1.1V21H9.6v-.09A1.7 1.7 0 0 0 8.6 19.4a1.7 1.7 0 0 0-1.88.34l-.06.06-2.83-2.83.06-.06A1.7 1.7 0 0 0 4.6 15a1.7 1.7 0 0 0-.6-1 1.7 1.7 0 0 0-1.1-.4H3V9.6h.09A1.7 1.7 0 0 0 4.6 8.6a1.7 1.7 0 0 0-.34-1.88l-.06-.06 2.83-2.83.06.06A1.7 1.7 0 0 0 9 4.6a1.7 1.7 0 0 0 1-.6 1.7 1.7 0 0 0 .4-1.1V3h4v.09A1.7 1.7 0 0 0 15.4 4.6a1.7 1.7 0 0 0 1.88-.34l.06-.06 2.83 2.83-.06.06A1.7 1.7 0 0 0 19.4 9c.14.37.35.7.6 1 .3.3.7.44 1.1.4h.09v4h-.09a1.7 1.7 0 0 0-1.7.6Z"/></svg>
+          <span data-i18n="nav.settings">Configurações</span>
+        </button>
+        <div class="profile-mini">
+          <img id="sidebar-avatar" src="./assets/images/avatar-placeholder.svg" alt="Avatar">
+          <div class="profile-mini__text">
+            <strong id="sidebar-user-name">Meu financeiro</strong>
+            <span id="sidebar-storage-label">Dados neste dispositivo</span>
+          </div>
+          <button id="lock-button" class="icon-button" aria-label="Bloquear agora" title="Bloquear agora">
+            <svg viewBox="0 0 24 24"><rect x="5" y="11" width="14" height="10" rx="2"/><path d="M8 11V7a4 4 0 0 1 8 0v4"/></svg>
+          </button>
+        </div>
+      </div>
+    </aside>
+
+    <main class="main-content">
+      <header class="topbar">
+        <div class="topbar__left">
+          <button id="mobile-menu" class="icon-button mobile-only" aria-label="Abrir menu">
+            <svg viewBox="0 0 24 24"><path d="M4 6h16M4 12h16M4 18h16"/></svg>
+          </button>
+          <div>
+            <p class="eyebrow" id="page-eyebrow">Visão geral</p>
+            <h1 id="page-title">Dashboard</h1>
+          </div>
+        </div>
+        <div class="topbar__actions">
+          <div class="global-search">
+            <svg viewBox="0 0 24 24"><circle cx="11" cy="11" r="7"/><path d="m20 20-3.5-3.5"/></svg>
+            <input id="global-search" type="search" placeholder="Buscar movimentação…" aria-label="Buscar movimentação">
+            <kbd>/</kbd>
+          </div>
+          <button id="sync-status" class="sync-status" type="button" data-status="setup" title="Configurar sincronização" aria-label="Estado da sincronização">
+            <i aria-hidden="true"></i><span>Configurar nuvem</span>
+          </button>
+          <button id="theme-toggle" class="icon-button" aria-label="Alternar tema" title="Alternar tema (T)">
+            <svg class="theme-icon theme-icon--sun" viewBox="0 0 24 24"><circle cx="12" cy="12" r="4"/><path d="M12 2v2M12 20v2M4.93 4.93l1.42 1.42M17.66 17.66l1.41 1.41M2 12h2M20 12h2M4.93 19.07l1.42-1.42M17.66 6.34l1.41-1.41"/></svg>
+            <svg class="theme-icon theme-icon--moon" viewBox="0 0 24 24"><path d="M21 12.8A9 9 0 1 1 11.2 3 7 7 0 0 0 21 12.8Z"/></svg>
+          </button>
+          <button class="button button--primary" data-action="new-transaction">
+            <svg viewBox="0 0 24 24"><path d="M12 5v14M5 12h14"/></svg>
+            <span data-i18n="actions.newEntry">Nova movimentação</span>
+          </button>
+        </div>
+      </header>
+
+      <div id="skeleton" class="page-skeleton" aria-hidden="true">
+        <div class="skeleton-row"><span></span><span></span><span></span><span></span></div>
+        <div class="skeleton-large"></div>
+      </div>
+
+      <div id="page-container" class="page-container" tabindex="-1"></div>
+    </main>
+  </div>
+
+  <div id="sidebar-backdrop" class="sidebar-backdrop"></div>
+  <div id="modal-root" class="modal-root" aria-live="polite"></div>
+  <div id="toast-root" class="toast-root" aria-live="polite" aria-atomic="true"></div>
+
+  <template id="confirm-template">
+    <div class="modal-backdrop" data-close-modal></div>
+    <section class="modal modal--small" role="dialog" aria-modal="true" aria-labelledby="confirm-title">
+      <button class="modal__close icon-button" data-close-modal aria-label="Fechar">
+        <svg viewBox="0 0 24 24"><path d="m6 6 12 12M18 6 6 18"/></svg>
+      </button>
+      <div class="confirm-icon" aria-hidden="true">
+        <svg viewBox="0 0 24 24"><path d="M12 9v4M12 17h.01"/><path d="M10.3 3.7 2.4 17.5A2 2 0 0 0 4.1 20h15.8a2 2 0 0 0 1.7-2.5L13.7 3.7a2 2 0 0 0-3.4 0Z"/></svg>
+      </div>
+      <h2 id="confirm-title">Confirmar ação</h2>
+      <p id="confirm-message">Tem certeza?</p>
+      <div class="modal__actions">
+        <button class="button button--secondary" data-close-modal>Cancelar</button>
+        <button id="confirm-button" class="button button--danger">Confirmar</button>
+      </div>
+    </section>
+  </template>
+
+  <input id="json-import-input" class="visually-hidden" type="file" accept="application/json,.json">
+  <input id="avatar-input" class="visually-hidden" type="file" accept="image/png,image/jpeg,image/webp">
+
+  <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.7/dist/chart.umd.min.js" crossorigin="anonymous"></script>
+  <script type="module" src="./js/app.js"></script>
+</body>
+</html>

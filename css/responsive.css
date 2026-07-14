@@ -1,0 +1,92 @@
+@media (max-width: 1180px) {
+  .metric-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+  .indicator-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+  .goal-grid, .debt-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+  .topbar .button--primary span { display: none; }
+  .topbar .button--primary { width: 40px; padding: 0; }
+  .global-search { width: min(270px, 26vw); }
+}
+
+@media (max-width: 980px) {
+  .mobile-only { display: inline-grid !important; }
+  .sidebar { transform: translateX(-100%); width: min(285px, 88vw) !important; box-shadow: var(--shadow-lg); }
+  body.mobile-menu-open .sidebar { transform: translateX(0); }
+  body.mobile-menu-open .sidebar-backdrop { display: block; }
+  body.sidebar-collapsed .brand__name,
+  body.sidebar-collapsed .nav-item span,
+  body.sidebar-collapsed .nav-group-label,
+  body.sidebar-collapsed .profile-mini__text,
+  body.sidebar-collapsed .profile-mini .icon-button { display: initial; }
+  body.sidebar-collapsed .nav-item { justify-content: flex-start; padding: 9px 11px; }
+  body.sidebar-collapsed .sidebar__header { justify-content: space-between; padding: 0 18px; }
+  body.sidebar-collapsed .sidebar__collapse { position: static; transform: none; background: transparent; border: 0; box-shadow: none; }
+  body.sidebar-collapsed .profile-mini { justify-content: flex-start; padding: 12px 8px 4px; }
+  .main-content, body.sidebar-collapsed .main-content { margin-left: 0; }
+  .sidebar__collapse { display: none; }
+  .dashboard-layout { grid-template-columns: 1fr; }
+  .goal-spotlight { min-height: 340px; }
+  .settings-layout { grid-template-columns: 1fr; }
+  .settings-nav { position: static; display: flex; overflow-x: auto; }
+  .settings-nav button { width: auto; white-space: nowrap; }
+  .evolution-hero { grid-template-columns: 1fr; }
+}
+
+@media (max-width: 760px) {
+  :root { --topbar-height: 68px; }
+  .topbar { padding: 10px 16px; gap: 10px; }
+  .topbar h1 { font-size: 18px; }
+  .eyebrow { display: none; }
+  .global-search { display: none; }
+  .page-container { padding: 18px 16px 46px; }
+  .page-skeleton { padding: 18px 16px; }
+  .metric-grid { grid-template-columns: 1fr 1fr; gap: 10px; }
+  .metric-card { min-height: 116px; padding: 14px; }
+  .metric-card__top { margin-bottom: 14px; }
+  .metric-card__value { font-size: 20px; }
+  .grid--2, .grid--3, .grid--4 { grid-template-columns: 1fr; }
+  .quick-actions { grid-template-columns: repeat(2, 1fr); }
+  .indicator-grid { grid-template-columns: 1fr 1fr; }
+  .goal-grid, .debt-grid { grid-template-columns: 1fr; }
+  .monthly-goal-list { grid-template-columns: 1fr; }
+  .form-grid { grid-template-columns: 1fr; }
+  .form-field--full { grid-column: auto; }
+  .modal-root { padding: 10px; align-items: end; }
+  .modal { max-height: 92vh; padding: 21px 17px; border-radius: 16px 16px 0 0; }
+  .modal__actions { position: sticky; bottom: -21px; margin-inline: -17px; padding: 13px 17px 21px; background: var(--surface); border-top: 1px solid var(--border); }
+  .page-heading { flex-direction: column; align-items: stretch; }
+  .page-heading__actions .button { flex: 1; }
+  .calendar-day { min-height: 85px; padding: 5px; }
+  .calendar-event { padding: 3px; font-size: 0; height: 7px; }
+  .calendar-event::after { content: ""; display: block; }
+  .calendar-weekday { padding: 8px 3px; }
+  .settings-row { grid-template-columns: 1fr; gap: 9px; }
+  .productivity-row { grid-template-columns: 1fr auto; }
+  .productivity-row__bar { grid-column: 1 / -1; grid-row: 2; }
+  .filters-bar .form-field { min-width: calc(50% - 9px); }
+  .filters-bar .form-field--search { min-width: 100%; }
+  .table-summary { grid-template-columns: 1fr; gap: 8px; }
+}
+
+@media (max-width: 480px) {
+  .topbar__actions { gap: 4px; }
+  .topbar__actions .icon-button { width: 36px; height: 36px; }
+  .metric-grid { grid-template-columns: 1fr; }
+  .metric-card { min-height: 112px; }
+  .indicator-grid { grid-template-columns: 1fr; }
+  .goal-spotlight__stats { grid-template-columns: 1fr; }
+  .evolution-metrics { grid-template-columns: 1fr; }
+  .auth-card { padding: 27px 21px; }
+  .calendar-toolbar { padding: 10px; }
+  .calendar-toolbar h3 { font-size: 14px; }
+  .calendar-day__number { width: 21px; height: 21px; }
+  .toast-root { right: 10px; bottom: 10px; width: calc(100vw - 20px); }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  *, *::before, *::after { scroll-behavior: auto !important; animation-duration: .01ms !important; animation-iteration-count: 1 !important; transition-duration: .01ms !important; }
+}
+
+@media (max-width: 760px) {
+  .sync-status { width: 36px; min-width: 36px; padding: 0; justify-content: center; }
+  .sync-status span { display: none; }
+}
