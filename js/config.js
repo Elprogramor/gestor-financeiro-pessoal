@@ -11,12 +11,12 @@ export const APP_CONFIG = Object.freeze({
   version: "3.0.0",
 
   // Substitua pelos valores públicos do seu projeto Supabase antes de publicar.
-  supabaseUrl: "https://kaxuylohxauezgnxkkru.supabase.co",
-  supabasePublishableKey: "sb_publishable_8RopQbxbuMie03H_eIkf-g_OSxh5y66",
+  supabaseUrl: "https://SEU-PROJETO.supabase.co",
+  supabasePublishableKey: "sb_publishable_COLE_SUA_CHAVE_PUBLICA_AQUI",
 
   // URL final do GitHub Pages, usada nos logins Google e links de convite.
   // Exemplo: "https://seuusuario.github.io/gestor-financeiro/"
-  publicAppUrl: "https://elprogramor.github.io/gestor-financeiro-pessoal/",
+  publicAppUrl: "",
 
   // Em produção, deixe false para que visitantes vejam somente login/cadastro.
   allowLocalMode: false

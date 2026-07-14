@@ -21,6 +21,7 @@
   body.sidebar-collapsed .sidebar__header { justify-content: space-between; padding: 0 18px; }
   body.sidebar-collapsed .sidebar__collapse { position: static; transform: none; background: transparent; border: 0; box-shadow: none; }
   body.sidebar-collapsed .profile-mini { justify-content: flex-start; padding: 12px 8px 4px; }
+  body.sidebar-collapsed .workspace-control { display:flex; }
   .main-content, body.sidebar-collapsed .main-content { margin-left: 0; }
   .sidebar__collapse { display: none; }
   .dashboard-layout { grid-template-columns: 1fr; }
@@ -92,14 +93,10 @@
 }
 
 @media (max-width: 1100px) {
-  .workspace-control__meta { display:none; }
-  .workspace-control { min-width:0; padding:7px 9px; }
-  .workspace-switcher { max-width:145px; }
+  .workspace-control__role { max-width:64px; }
 }
 
 @media (max-width: 760px) {
-  .workspace-control { order:4; width:100%; }
-  .workspace-switcher { max-width:none; width:100%; }
   .invite-form { grid-template-columns:1fr; }
   .access-person,.access-invite { align-items:flex-start; flex-wrap:wrap; }
   .member-actions,.access-invite .data-actions { width:100%; justify-content:flex-start; }

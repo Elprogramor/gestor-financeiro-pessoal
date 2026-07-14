@@ -312,12 +312,15 @@ html[data-theme="dark"] .theme-icon--moon { display: block; }
 .auth-divider::before,.auth-divider::after { content:""; height:1px; flex:1; background:var(--border); }
 .auth-divider span { white-space:nowrap; }
 
-.workspace-control { display:flex; align-items:center; gap:10px; padding:6px 8px 6px 12px; border:1px solid var(--border); border-radius:12px; background:var(--surface); min-width:220px; }
-.workspace-control__meta { display:flex; flex-direction:column; min-width:0; line-height:1.15; }
-.workspace-control__meta span { font-size:.66rem; color:var(--text-soft); text-transform:uppercase; letter-spacing:.06em; }
-.workspace-control__meta strong { font-size:.72rem; color:var(--primary); font-weight:700; }
-.workspace-switcher { appearance:none; border:0; outline:0; background:transparent; color:var(--text); font:inherit; font-size:.82rem; font-weight:650; min-width:110px; max-width:190px; cursor:pointer; }
+.workspace-control { display:flex; align-items:center; gap:9px; width:100%; min-width:0; margin-bottom:8px; padding:9px 10px; border:1px solid var(--border); border-radius:12px; background:var(--surface-2); transition:border-color var(--transition), background var(--transition); }
+.workspace-control:focus-within { border-color:var(--primary); background:var(--surface); box-shadow:0 0 0 3px var(--primary-soft); }
+.workspace-control__icon { width:18px; height:18px; flex:0 0 auto; color:var(--text-faint); }
+.workspace-control__content { display:flex; flex:1; min-width:0; flex-direction:column; line-height:1.15; }
+.workspace-control__label { margin-bottom:2px; font-size:.61rem; color:var(--text-faint); text-transform:uppercase; letter-spacing:.07em; font-weight:700; }
+.workspace-control__role { max-width:72px; overflow:hidden; text-overflow:ellipsis; white-space:nowrap; padding:4px 6px; border-radius:999px; background:var(--primary-soft); color:var(--primary); font-size:.58rem; font-weight:750; }
+.workspace-switcher { width:100%; min-width:0; appearance:none; border:0; outline:0; padding:0 14px 0 0; background:transparent; color:var(--text); font:inherit; font-size:.76rem; font-weight:650; cursor:pointer; text-overflow:ellipsis; }
 .workspace-switcher option { color:#111827; background:#fff; }
+body.sidebar-collapsed .workspace-control { display:none; }
 
 .role-badge { display:inline-flex; align-items:center; justify-content:center; min-height:28px; padding:5px 10px; border-radius:999px; font-size:.72rem; font-weight:700; white-space:nowrap; }
 .role-badge--owner { background:var(--primary-soft); color:var(--primary); }
