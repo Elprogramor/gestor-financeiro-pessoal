@@ -9,7 +9,8 @@ const NAMESPACE = "fluxo_finance_v1";
 const DATA_KEY = `${NAMESPACE}:data`;
 const AUTH_KEY = `${NAMESPACE}:auth`;
 const BACKUP_KEY = `${NAMESPACE}:backups`;
-const CURRENT_SCHEMA = 2;
+const LEGACY_MIGRATION_KEY = `${NAMESPACE}:legacy-cloud-migration`;
+const CURRENT_SCHEMA = 3;
 
 const defaultSettings = Object.freeze({
   userName: "Meu financeiro",
@@ -83,10 +84,58 @@ function migrate(data) {
 class StorageService extends EventTarget {
   #data = null;
   #backupTimer = null;
+  #scope = { mode: "legacy", userId: "local", workspaceId: "local" };
+
+  getScope() {
+    return { ...this.#scope };
+  }
+
+  setScope({ userId = "local", workspaceId = userId, migrateLegacy = false } = {}) {
+    const next = {
+      mode: userId === "local" ? "legacy" : "cloud",
+      userId: String(userId || "local"),
+      workspaceId: String(workspaceId || userId || "local")
+    };
+    const unchanged = this.#scope.mode === next.mode
+      && this.#scope.userId === next.userId
+      && this.#scope.workspaceId === next.workspaceId;
+    if (unchanged) return this.getScope();
+
+    const targetKey = next.mode === "legacy" ? DATA_KEY : `${NAMESPACE}:data:${next.userId}:${next.workspaceId}`;
+    if (migrateLegacy && next.mode === "cloud" && !localStorage.getItem(targetKey)) {
+      const migratedTo = localStorage.getItem(LEGACY_MIGRATION_KEY);
+      const legacy = localStorage.getItem(DATA_KEY);
+      if (legacy && (!migratedTo || migratedTo === next.userId)) {
+        localStorage.setItem(targetKey, legacy);
+        const legacyBackups = localStorage.getItem(BACKUP_KEY);
+        if (legacyBackups) localStorage.setItem(`${NAMESPACE}:backups:${next.userId}:${next.workspaceId}`, legacyBackups);
+        localStorage.setItem(LEGACY_MIGRATION_KEY, next.userId);
+      }
+    }
+
+    this.#scope = next;
+    this.#data = null;
+    clearTimeout(this.#backupTimer);
+    this.#backupTimer = null;
+    this.#emit("scope:changed", this.getScope());
+    return this.getScope();
+  }
+
+  #dataKey() {
+    return this.#scope.mode === "legacy"
+      ? DATA_KEY
+      : `${NAMESPACE}:data:${this.#scope.userId}:${this.#scope.workspaceId}`;
+  }
+
+  #backupKey() {
+    return this.#scope.mode === "legacy"
+      ? BACKUP_KEY
+      : `${NAMESPACE}:backups:${this.#scope.userId}:${this.#scope.workspaceId}`;
+  }
 
   load() {
     if (this.#data) return this.#data;
-    const stored = safeJSONParse(localStorage.getItem(DATA_KEY), null);
+    const stored = safeJSONParse(localStorage.getItem(this.#dataKey()), null);
     this.#data = migrate(stored);
     this.#data.activity.lastOpenedAt = new Date().toISOString();
     this.#persist(false);
@@ -172,7 +221,7 @@ class StorageService extends EventTarget {
   clearAll({ preserveAuth = true } = {}) {
     if (this.getSettings().autoBackup) this.createBackup("before-reset");
     this.#data = createDefaultData();
-    localStorage.setItem(DATA_KEY, JSON.stringify(this.#data));
+    localStorage.setItem(this.#dataKey(), JSON.stringify(this.#data));
     if (!preserveAuth) localStorage.removeItem(AUTH_KEY);
     this.#emit("data:reset", this.getData());
     this.#emit("data:changed", { action: "reset" });
@@ -183,6 +232,7 @@ class StorageService extends EventTarget {
       app: "Fluxo",
       schemaVersion: CURRENT_SCHEMA,
       exportedAt: new Date().toISOString(),
+      scope: this.getScope(),
       data: this.getData()
     };
   }
@@ -219,7 +269,7 @@ class StorageService extends EventTarget {
   }
 
   createBackup(reason = "automatic") {
-    const backups = safeJSONParse(localStorage.getItem(BACKUP_KEY), []);
+    const backups = safeJSONParse(localStorage.getItem(this.#backupKey()), []);
     const safeBackups = Array.isArray(backups) ? backups : [];
     safeBackups.unshift({
       id: uid("backup"),
@@ -227,19 +277,19 @@ class StorageService extends EventTarget {
       createdAt: new Date().toISOString(),
       data: this.getData()
     });
-    localStorage.setItem(BACKUP_KEY, JSON.stringify(safeBackups.slice(0, 5)));
+    localStorage.setItem(this.#backupKey(), JSON.stringify(safeBackups.slice(0, 5)));
     this.load().activity.lastBackupAt = new Date().toISOString();
     this.#persist(false);
     this.#emit("backup:created", { reason });
   }
 
   listBackups() {
-    const backups = safeJSONParse(localStorage.getItem(BACKUP_KEY), []);
+    const backups = safeJSONParse(localStorage.getItem(this.#backupKey()), []);
     return Array.isArray(backups) ? backups.map(({ data, ...meta }) => meta) : [];
   }
 
   restoreBackup(id) {
-    const backups = safeJSONParse(localStorage.getItem(BACKUP_KEY), []);
+    const backups = safeJSONParse(localStorage.getItem(this.#backupKey()), []);
     const backup = Array.isArray(backups) ? backups.find((item) => item.id === id) : null;
     if (!backup) throw new Error("Backup não encontrado.");
     this.#data = migrate(backup.data);
@@ -350,7 +400,7 @@ class StorageService extends EventTarget {
 
   #persist(allowAutoBackup = true) {
     try {
-      localStorage.setItem(DATA_KEY, JSON.stringify(this.#data));
+      localStorage.setItem(this.#dataKey(), JSON.stringify(this.#data));
       if (allowAutoBackup && this.#data?.settings?.autoBackup) this.#maybeAutoBackup();
     } catch (error) {
       this.#emit("storage:error", { error });
@@ -375,4 +425,4 @@ class StorageService extends EventTarget {
 }
 
 export const storage = new StorageService();
-export { CURRENT_SCHEMA, DATA_KEY, AUTH_KEY, BACKUP_KEY, defaultSettings };
+export { CURRENT_SCHEMA, DATA_KEY, AUTH_KEY, BACKUP_KEY, defaultSettings, NAMESPACE };

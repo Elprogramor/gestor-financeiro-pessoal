@@ -1,7 +1,7 @@
 {
   "name": "Fluxo — Gestão Financeira",
   "short_name": "Fluxo",
-  "description": "Gestão financeira pessoal com funcionamento offline e sincronização entre dispositivos.",
+  "description": "Gestão financeira pessoal com funcionamento offline, contas individuais e espaços compartilhados.",
   "id": "./",
   "start_url": "./index.html#/dashboard",
   "scope": "./",

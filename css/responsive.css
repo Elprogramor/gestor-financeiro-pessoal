@@ -90,3 +90,18 @@
   .sync-status { width: 36px; min-width: 36px; padding: 0; justify-content: center; }
   .sync-status span { display: none; }
 }
+
+@media (max-width: 1100px) {
+  .workspace-control__meta { display:none; }
+  .workspace-control { min-width:0; padding:7px 9px; }
+  .workspace-switcher { max-width:145px; }
+}
+
+@media (max-width: 760px) {
+  .workspace-control { order:4; width:100%; }
+  .workspace-switcher { max-width:none; width:100%; }
+  .invite-form { grid-template-columns:1fr; }
+  .access-person,.access-invite { align-items:flex-start; flex-wrap:wrap; }
+  .member-actions,.access-invite .data-actions { width:100%; justify-content:flex-start; }
+  .member-actions .form-control { flex:1; }
+}

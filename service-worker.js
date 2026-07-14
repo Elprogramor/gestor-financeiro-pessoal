@@ -1,4 +1,4 @@
-const CACHE_NAME = "fluxo-app-v2.2.0";
+const CACHE_NAME = "fluxo-app-v3.0.0";
 const APP_SHELL = [
   "./",
   "./index.html",
@@ -8,9 +8,10 @@ const APP_SHELL = [
   "./css/forms.css",
   "./css/tables.css",
   "./css/responsive.css",
-  "./js/app.js?v=2.2.0",
+  "./js/app.js?v=3.0.0",
+  "./js/config.js",
   "./js/storage.js",
-  "./js/cloud.js?v=2.2.0",
+  "./js/cloud.js",
   "./js/dashboard.js",
   "./js/finance.js",
   "./js/goals.js",
@@ -62,6 +63,16 @@ self.addEventListener("fetch", (event) => {
   // Nunca guarda autenticação, REST, Realtime ou outros dados do Supabase no Cache Storage.
   if (isSupabaseApi) return;
   if (!isSameOrigin && !isStaticCdn) return;
+
+  if (isSameOrigin && url.pathname.endsWith("/js/config.js")) {
+    event.respondWith(
+      fetch(event.request).then((response) => {
+        if (response.ok) caches.open(CACHE_NAME).then((cache) => cache.put(event.request, response.clone()));
+        return response;
+      }).catch(() => caches.match(event.request))
+    );
+    return;
+  }
 
   if (isNavigation) {
     event.respondWith(

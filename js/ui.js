@@ -81,29 +81,41 @@ class UIService extends EventTarget {
         <div class="form-field"><label for="cloud-key">Publishable key ou anon key</label><div class="password-field"><input id="cloud-key" class="form-control" name="key" type="password" required autocomplete="off" placeholder="sb_publishable_..." value="${escapeHTML(config.key || "")}"><button class="icon-button" type="button" data-action="toggle-password" aria-label="Exibir chave">${ICONS.info}</button></div></div>
         <button class="button button--primary button--block" type="submit">Conectar ao Supabase</button>
       </form>
-      <button class="button button--ghost button--block auth-secondary-action" type="button" data-auth-action="use-local-mode">Continuar somente neste dispositivo</button>
-      <div class="auth-note">${ICONS.info}<span>Antes de conectar, execute o arquivo <strong>supabase-setup.sql</strong> no SQL Editor. Nunca cole uma Secret key ou service_role aqui.</span></div>
+      ${cloud.canUseLocalMode() ? '<button class="button button--ghost button--block auth-secondary-action" type="button" data-auth-action="use-local-mode">Continuar somente neste dispositivo</button>' : ""}
+      <div class="auth-note">${ICONS.info}<span>Antes de conectar, execute o arquivo <strong>supabase-setup.sql</strong> e a atualização <strong>supabase-upgrade-v3.sql</strong>. Nunca cole uma Secret key ou service_role aqui.</span></div>
     </div>`;
   }
 
   renderCloudLogin(message = "", email = "") {
+    const setupLink = cloud.isBundledConfig() ? "" : '<button type="button" data-auth-action="show-cloud-setup">Alterar conexão</button>';
     return `<div>
       <h1>Acessar seu financeiro</h1>
-      <p>${escapeHTML(message || "Entre com a mesma conta no celular e no computador.")}</p>
+      <p>${escapeHTML(message || "Entre com sua conta para acessar seus dados em qualquer dispositivo.")}</p>
+      <button class="button button--google button--block" type="button" data-auth-action="google-login" aria-label="Entrar com o Google">
+        <svg viewBox="0 0 24 24" aria-hidden="true"><path fill="#4285F4" d="M21.6 12.23c0-.71-.06-1.39-.18-2.05H12v3.87h5.38a4.6 4.6 0 0 1-2 3.02v2.51h3.24c1.9-1.75 2.98-4.33 2.98-7.35Z"/><path fill="#34A853" d="M12 22c2.7 0 4.97-.9 6.63-2.42l-3.24-2.51c-.9.6-2.05.96-3.39.96-2.61 0-4.82-1.76-5.61-4.13H3.04v2.59A10 10 0 0 0 12 22Z"/><path fill="#FBBC05" d="M6.39 13.9A6 6 0 0 1 6.08 12c0-.66.11-1.3.31-1.9V7.51H3.04A10 10 0 0 0 2 12c0 1.61.38 3.13 1.04 4.49l3.35-2.59Z"/><path fill="#EA4335" d="M12 5.97c1.47 0 2.78.5 3.82 1.49l2.87-2.87A9.6 9.6 0 0 0 12 2a10 10 0 0 0-8.96 5.51l3.35 2.59C7.18 7.73 9.39 5.97 12 5.97Z"/></svg>
+        Continuar com o Google
+      </button>
+      <div class="auth-divider"><span>ou entre com e-mail</span></div>
       <form id="cloud-login-form" class="stack" autocomplete="on">
         <div class="form-field"><label for="cloud-login-email">E-mail</label><input id="cloud-login-email" class="form-control" name="email" type="email" required autocomplete="email" value="${escapeHTML(email)}" placeholder="voce@email.com"></div>
         <div class="form-field"><label for="cloud-login-password">Senha</label><div class="password-field"><input id="cloud-login-password" class="form-control" name="password" type="password" required minlength="6" autocomplete="current-password" placeholder="Sua senha"><button class="icon-button" type="button" data-action="toggle-password" aria-label="Exibir senha">${ICONS.info}</button></div></div>
         <button class="button button--primary button--block" type="submit">Entrar e sincronizar</button>
       </form>
-      <div class="auth-links"><button type="button" data-auth-action="show-cloud-register">Criar minha conta</button><button type="button" data-auth-action="show-cloud-setup">Alterar conexão</button></div>
-      <div class="auth-note">${ICONS.lock}<span>Seus dados ficam protegidos por autenticação e políticas que restringem cada registro ao dono da conta.</span></div>
+      <div class="auth-links"><button type="button" data-auth-action="show-cloud-register">Criar minha conta</button>${setupLink}</div>
+      <div class="auth-note">${ICONS.lock}<span>Cada conta possui dados separados. Convites compartilhados respeitam permissões de edição ou somente leitura.</span></div>
     </div>`;
   }
 
   renderCloudRegister(message = "", email = "") {
+    const setupLink = cloud.isBundledConfig() ? "" : '<button type="button" data-auth-action="show-cloud-setup">Alterar conexão</button>';
     return `<div>
       <h1>Criar conta pessoal</h1>
-      <p>${escapeHTML(message || "Crie uma única conta para manter seus dispositivos sincronizados.")}</p>
+      <p>${escapeHTML(message || "Crie sua conta individual ou entre com o Google. Seus dados ficam separados dos demais usuários.")}</p>
+      <button class="button button--google button--block" type="button" data-auth-action="google-login">
+        <svg viewBox="0 0 24 24" aria-hidden="true"><path fill="#4285F4" d="M21.6 12.23c0-.71-.06-1.39-.18-2.05H12v3.87h5.38a4.6 4.6 0 0 1-2 3.02v2.51h3.24c1.9-1.75 2.98-4.33 2.98-7.35Z"/><path fill="#34A853" d="M12 22c2.7 0 4.97-.9 6.63-2.42l-3.24-2.51c-.9.6-2.05.96-3.39.96-2.61 0-4.82-1.76-5.61-4.13H3.04v2.59A10 10 0 0 0 12 22Z"/><path fill="#FBBC05" d="M6.39 13.9A6 6 0 0 1 6.08 12c0-.66.11-1.3.31-1.9V7.51H3.04A10 10 0 0 0 2 12c0 1.61.38 3.13 1.04 4.49l3.35-2.59Z"/><path fill="#EA4335" d="M12 5.97c1.47 0 2.78.5 3.82 1.49l2.87-2.87A9.6 9.6 0 0 0 12 2a10 10 0 0 0-8.96 5.51l3.35 2.59C7.18 7.73 9.39 5.97 12 5.97Z"/></svg>
+        Criar conta com o Google
+      </button>
+      <div class="auth-divider"><span>ou use e-mail e senha</span></div>
       <form id="cloud-register-form" class="stack" autocomplete="on">
         <div class="form-field"><label for="cloud-register-name">Seu nome</label><input id="cloud-register-name" class="form-control" name="name" required maxlength="60" value="${escapeHTML(storage.getSettings().userName || "")}" placeholder="Seu nome"></div>
         <div class="form-field"><label for="cloud-register-email">E-mail</label><input id="cloud-register-email" class="form-control" name="email" type="email" required autocomplete="email" value="${escapeHTML(email)}" placeholder="voce@email.com"></div>
@@ -111,7 +123,7 @@ class UIService extends EventTarget {
         <div class="form-field"><label for="cloud-register-confirm">Confirmar senha</label><input id="cloud-register-confirm" class="form-control" name="confirm" type="password" required minlength="6" maxlength="72" autocomplete="new-password" placeholder="Repita a senha"></div>
         <button class="button button--primary button--block" type="submit">Criar conta e sincronizar</button>
       </form>
-      <div class="auth-links"><button type="button" data-auth-action="show-cloud-login">Já tenho uma conta</button><button type="button" data-auth-action="show-cloud-setup">Alterar conexão</button></div>
+      <div class="auth-links"><button type="button" data-auth-action="show-cloud-login">Já tenho uma conta</button>${setupLink}</div>
     </div>`;
   }
 
@@ -334,16 +346,23 @@ class UIService extends EventTarget {
     const cloudStatusLabels = { synced: "Sincronizado", syncing: "Sincronizando", pending: "Pendente", offline: "Offline", error: "Atenção", "signed-out": "Desconectado", local: "Modo local", setup: "Não configurado" };
     const cloudStatusLabel = cloudStatusLabels[cloudState.status] || cloudState.status;
     const bytesLabel = usage.bytes < 1024 ? `${usage.bytes} B` : usage.bytes < 1024 * 1024 ? `${(usage.bytes / 1024).toFixed(1)} KB` : `${(usage.bytes / 1024 / 1024).toFixed(2)} MB`;
+    const roleLabels = { owner: "Proprietário", editor: "Editor", viewer: "Somente leitura" };
+    const navigation = [["cloud","Nuvem e sincronização"], ...(cloudState.signedIn ? [["access","Pessoas e acessos"]] : []), ["profile","Perfil"],["appearance","Aparência"],["finance","Financeiro"],["security","Segurança"],["data","Dados e backup"]];
+    const accessSection = cloudState.signedIn ? `<section class="panel settings-section" data-settings-panel="access"><h3>Pessoas e acessos</h3><p>Compartilhe este espaço sem compartilhar sua senha. Cada convidado entra com a própria conta.</p>
+      <div class="settings-row"><div class="settings-row__label"><strong>Espaço atual</strong><span>${escapeHTML(cloudState.workspace?.name || "Meu financeiro")}</span></div><span class="role-badge role-badge--${escapeHTML(cloudState.role)}">${roleLabels[cloudState.role] || "Membro"}</span></div>
+      <div id="access-management-content"><div class="access-loading"><span class="spinner"></span>Carregando acessos…</div></div>
+    </section>` : "";
     const html = `<div class="page-heading"><div><h2>Configurações</h2><p>Personalize o sistema, gerencie backups, segurança, moeda e preferências.</p></div></div>
       <div class="settings-layout"><nav class="panel settings-nav">
-        ${[["cloud","Nuvem e sincronização"],["profile","Perfil"],["appearance","Aparência"],["finance","Financeiro"],["security","Segurança"],["data","Dados e backup"]].map(([id,label]) => `<button data-settings-section="${id}" class="${this.#activeSettingsSection === id ? "is-active" : ""}">${label}</button>`).join("")}
+        ${navigation.map(([id,label]) => `<button data-settings-section="${id}" class="${this.#activeSettingsSection === id ? "is-active" : ""}">${label}</button>`).join("")}
       </nav><div>
         <section class="panel settings-section" data-settings-panel="cloud"><h3>Nuvem e sincronização</h3><p>Acompanhe a conexão entre este dispositivo e o banco compartilhado.</p>
           <div class="settings-row"><div class="settings-row__label"><strong>Conta conectada</strong><span>${cloudState.email ? escapeHTML(cloudState.email) : cloudState.mode === "local" ? "Uso somente local" : "Nenhuma conta conectada"}</span></div><span class="sync-badge sync-badge--${escapeHTML(cloudState.status)}"><i></i>${escapeHTML(cloudStatusLabel)}</span></div>
           <div class="settings-row"><div class="settings-row__label"><strong>Estado da sincronização</strong><span>${escapeHTML(cloudState.message)}${cloudState.pending ? ` • ${cloudState.pending} alteração(ões) pendente(s)` : ""}</span></div><button class="button button--secondary" data-action="sync-now" ${cloudState.signedIn ? "" : "disabled"}>Sincronizar agora</button></div>
           <div class="settings-row"><div class="settings-row__label"><strong>Backup na nuvem</strong><span>Cria uma cópia adicional completa e mantém até dez versões.</span></div><button class="button button--secondary" data-action="cloud-backup" ${cloudState.signedIn ? "" : "disabled"}>Criar backup na nuvem</button></div>
-          <div class="settings-row"><div class="settings-row__label"><strong>Sessão</strong><span>Use a mesma conta em todos os seus dispositivos.</span></div><div class="data-actions">${cloudState.signedIn ? '<button class="button button--secondary button--small" data-action="cloud-sign-out">Sair da conta</button>' : ''}<button class="button button--ghost button--small text-danger" data-action="reset-cloud-config">Reconfigurar conexão</button></div></div>
+          <div class="settings-row"><div class="settings-row__label"><strong>Sessão</strong><span>Use a mesma conta em todos os seus dispositivos.</span></div><div class="data-actions">${cloudState.signedIn ? '<button class="button button--secondary button--small" data-action="cloud-sign-out">Sair da conta</button>' : ''}${cloudState.bundledConfig ? "" : '<button class="button button--ghost button--small text-danger" data-action="reset-cloud-config">Reconfigurar conexão</button>'}</div></div>
         </section>
+        ${accessSection}
         <section class="panel settings-section" data-settings-panel="profile"><h3>Perfil</h3><p>Informações usadas na personalização local do painel.</p>
           <div class="settings-row"><div class="settings-row__label"><strong>Avatar</strong><span>Imagem sincronizada com a conta e mantida no cache local.</span></div><div class="avatar-editor"><img id="settings-avatar-preview" src="${sanitizeImageDataUrl(settings.avatar) || "./assets/images/avatar-placeholder.svg"}" alt="Avatar"><div class="cluster"><button class="button button--secondary button--small" data-action="choose-avatar">Escolher imagem</button>${settings.avatar ? '<button class="button button--ghost button--small text-danger" data-action="remove-avatar">Remover</button>' : ""}</div></div></div>
           <div class="settings-row"><div class="settings-row__label"><strong>Nome do usuário</strong><span>Exibido na barra lateral e sincronizado com a conta.</span></div><input id="setting-user-name" class="form-control" value="${escapeHTML(settings.userName)}" maxlength="60"></div>
@@ -379,6 +398,7 @@ class UIService extends EventTarget {
         document.getElementById("setting-currency").value = settings.currency;
         document.getElementById("setting-timeout").value = String(settings.inactivityMinutes);
         this.#applySettingsPanelVisibility();
+        if (cloudState.signedIn) this.#loadAccessPanel();
         document.querySelectorAll("[data-settings-section]").forEach((button) => button.addEventListener("click", () => {
           this.#activeSettingsSection = button.dataset.settingsSection;
           document.querySelectorAll("[data-settings-section]").forEach((item) => item.classList.toggle("is-active", item === button));
@@ -388,12 +408,100 @@ class UIService extends EventTarget {
     };
   }
 
+  async #loadAccessPanel() {
+    const container = document.getElementById("access-management-content");
+    if (!container) return;
+    const state = cloud.getState();
+    if (!cloud.isOwner()) {
+      const label = state.role === "editor" ? "Você pode consultar e alterar os dados deste espaço." : "Você pode consultar os dados, mas não pode criar, editar ou excluir informações.";
+      container.innerHTML = `<div class="access-info">${ICONS.lock}<div><strong>Acesso concedido por convite</strong><p>${label} Somente o proprietário pode convidar ou remover pessoas.</p></div></div>`;
+      return;
+    }
+
+    try {
+      const [members, invites] = await Promise.all([cloud.listMembers(), cloud.listPendingInvites()]);
+      const memberRows = members.map((member) => {
+        const isOwner = member.role === "owner";
+        const roleControl = isOwner
+          ? '<span class="role-badge role-badge--owner">Proprietário</span>'
+          : `<div class="member-actions"><select class="form-control form-control--small" data-member-role="${member.member_user_id}"><option value="editor" ${member.role === "editor" ? "selected" : ""}>Editor</option><option value="viewer" ${member.role === "viewer" ? "selected" : ""}>Somente leitura</option></select><button class="button button--secondary button--small" data-action="update-member-role" data-id="${member.member_user_id}">Salvar</button><button class="button button--ghost button--small text-danger" data-action="remove-member" data-id="${member.member_user_id}">Remover</button></div>`;
+        return `<div class="access-person"><div class="access-avatar">${escapeHTML((member.display_name || member.email || "?").slice(0, 1).toUpperCase())}</div><div class="access-person__identity"><strong>${escapeHTML(member.display_name || "Usuário")}</strong><span>${escapeHTML(member.email || "")}</span></div>${roleControl}</div>`;
+      }).join("");
+      const inviteRows = invites.length ? invites.map((invite) => `<div class="access-invite"><div><strong>${escapeHTML(invite.email)}</strong><span>${invite.role === "editor" ? "Pode editar" : "Somente leitura"} • expira em ${formatDate(invite.expires_at, storage.getSettings().locale)}</span></div><div class="data-actions"><button class="button button--ghost button--small" data-action="copy-invite" data-link="${escapeHTML(invite.link)}">Copiar link</button><button class="button button--ghost button--small text-danger" data-action="cancel-invite" data-id="${invite.id}">Cancelar</button></div></div>`).join("") : '<p class="small muted">Nenhum convite pendente.</p>';
+
+      container.innerHTML = `<div class="invite-box">
+        <div><h4>Convidar uma pessoa</h4><p>Ela entrará com o próprio e-mail, senha ou Google. O convite não dá acesso à sua conta pessoal.</p></div>
+        <div class="invite-form"><input id="invite-email" class="form-control" type="email" placeholder="pessoa@email.com" autocomplete="email"><select id="invite-role" class="form-control"><option value="editor">Pode visualizar e editar</option><option value="viewer">Somente visualizar</option></select><button class="button button--primary" data-action="create-invite">Criar convite</button></div>
+        <div id="invite-created-result"></div>
+      </div>
+      <div class="access-group"><div class="access-group__heading"><h4>Pessoas com acesso</h4><span>${members.length} pessoa(s)</span></div><div class="access-list">${memberRows}</div></div>
+      <div class="access-group"><div class="access-group__heading"><h4>Convites pendentes</h4><span>${invites.length}</span></div><div class="access-list">${inviteRows}</div></div>`;
+    } catch (error) {
+      container.innerHTML = `<div class="access-info access-info--error">${ICONS.info}<div><strong>Não foi possível carregar os acessos</strong><p>${escapeHTML(error.message || "Verifique se a atualização SQL v3 foi executada.")}</p></div></div>`;
+    }
+  }
+
+  async #createInvite() {
+    const email = document.getElementById("invite-email")?.value.trim();
+    const role = document.getElementById("invite-role")?.value;
+    if (!email) return this.toast("Informe o e-mail da pessoa convidada.", "error");
+    try {
+      const invite = await cloud.createInvite({ email, role });
+      const result = document.getElementById("invite-created-result");
+      if (result) result.innerHTML = `<div class="invite-result"><div><strong>Convite criado para ${escapeHTML(invite.email)}</strong><p>Envie este link. Ele expira automaticamente e só funciona para o e-mail convidado.</p></div><div class="invite-link-row"><input class="form-control" readonly value="${escapeHTML(invite.link)}"><button class="button button--secondary button--small" data-action="copy-invite" data-link="${escapeHTML(invite.link)}">Copiar</button><button class="button button--secondary button--small" data-action="share-invite" data-link="${escapeHTML(invite.link)}" data-email="${escapeHTML(invite.email)}">Compartilhar</button><button class="button button--ghost button--small" data-action="email-invite" data-link="${escapeHTML(invite.link)}" data-email="${escapeHTML(invite.email)}">E-mail</button></div></div>`;
+      this.toast("Convite criado com segurança.");
+    } catch (error) {
+      this.toast(error.message || "Não foi possível criar o convite.", "error");
+    }
+  }
+
+  async #copyInvite(link) {
+    if (!link) return;
+    try {
+      await navigator.clipboard.writeText(link);
+      this.toast("Link do convite copiado.");
+    } catch {
+      const input = document.createElement("textarea");
+      input.value = link;
+      document.body.appendChild(input);
+      input.select();
+      document.execCommand("copy");
+      input.remove();
+      this.toast("Link do convite copiado.");
+    }
+  }
+
+  async #shareInvite(link, email) {
+    const text = `Você recebeu acesso a um espaço financeiro no Fluxo. Entre com ${email} para aceitar: ${link}`;
+    if (navigator.share) {
+      try { await navigator.share({ title: "Convite para o Fluxo", text, url: link }); return; }
+      catch (error) { if (error?.name === "AbortError") return; }
+    }
+    await this.#copyInvite(link);
+  }
+
+  #emailInvite(link, email) {
+    const subject = encodeURIComponent("Convite para acessar um espaço financeiro no Fluxo");
+    const body = encodeURIComponent(`Olá! Você recebeu acesso a um espaço financeiro no Fluxo.\n\nEntre usando este mesmo e-mail (${email}) e abra o link:\n${link}`);
+    location.href = `mailto:${encodeURIComponent(email)}?subject=${subject}&body=${body}`;
+  }
+
   #applySettingsPanelVisibility() {
     document.querySelectorAll("[data-settings-panel]").forEach((panel) => panel.classList.toggle("is-hidden", panel.dataset.settingsPanel !== this.#activeSettingsSection));
   }
 
   async handleAction(action, element) {
     const id = element?.dataset?.id;
+    const writeActions = new Set([
+      "new-transaction", "new-income", "new-expense", "edit-transaction", "delete-transaction",
+      "new-goal", "edit-goal", "delete-goal", "new-debt", "edit-debt", "delete-debt",
+      "new-monthly-goal", "edit-monthly-goal", "delete-monthly-goal", "import-json",
+      "choose-avatar", "remove-avatar", "set-accent", "save-settings", "cloud-backup",
+      "load-demo", "reset-data", "restore-backup"
+    ]);
+    if (cloud.isCloudMode() && cloud.getState().signedIn && !cloud.canEdit() && writeActions.has(action)) {
+      return this.toast("Este acesso é somente para visualização.", "warning");
+    }
     switch (action) {
       case "new-transaction": return this.openTransactionModal();
       case "new-income": return this.openTransactionModal(null, "income");
@@ -427,6 +535,13 @@ class UIService extends EventTarget {
       case "cloud-backup": { try { await cloud.createCloudBackup("manual"); this.toast("Backup na nuvem criado."); } catch (error) { this.toast(error.message, "error"); } return this.#emitRefresh(); }
       case "cloud-sign-out": return cloud.signOut();
       case "reset-cloud-config": return this.#resetCloudConfiguration();
+      case "create-invite": return this.#createInvite();
+      case "copy-invite": return this.#copyInvite(element.dataset.link);
+      case "share-invite": return this.#shareInvite(element.dataset.link, element.dataset.email);
+      case "email-invite": return this.#emailInvite(element.dataset.link, element.dataset.email);
+      case "cancel-invite": { try { await cloud.cancelInvite(id); this.toast("Convite cancelado."); await this.#loadAccessPanel(); } catch (error) { this.toast(error.message, "error"); } return; }
+      case "update-member-role": { try { const role = document.querySelector(`[data-member-role="${id}"]`)?.value; await cloud.updateMemberRole(id, role); this.toast("Permissão atualizada."); await this.#loadAccessPanel(); } catch (error) { this.toast(error.message, "error"); } return; }
+      case "remove-member": { if (!await this.confirm("Remover acesso", "Esta pessoa deixará de acessar este espaço financeiro.", "Remover")) return; try { await cloud.removeMember(id); this.toast("Acesso removido."); await this.#loadAccessPanel(); } catch (error) { this.toast(error.message, "error"); } return; }
       case "create-backup": storage.createBackup("manual"); this.toast("Backup local criado."); return this.#emitRefresh();
       case "restore-backup": return this.#restoreBackup(id);
       case "load-demo": return this.#loadDemo();

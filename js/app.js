@@ -4,10 +4,10 @@
  */
 
 import { renderDashboard, renderEvolution, renderProductivity, renderStats } from "./dashboard.js";
-import { cloud } from "./cloud.js?v=2.2.0";
+import { cloud } from "./cloud.js";
 import { storage } from "./storage.js";
 import { ui } from "./ui.js";
-import { applyTranslations, debounce, hashPassword, randomSalt } from "./utils.js";
+import { applyTranslations, debounce, escapeHTML, hashPassword, randomSalt } from "./utils.js";
 
 class FinanceApp {
   #route = "dashboard";
@@ -33,6 +33,7 @@ class FinanceApp {
         const session = await cloud.getSession();
         if (session) {
           await cloud.syncNow({ initial: true });
+          await this.processPendingInvite();
           this.unlock();
           return;
         }
@@ -51,14 +52,16 @@ class FinanceApp {
     document.getElementById("auth-screen").classList.remove("is-hidden");
     const authContent = document.getElementById("auth-content");
 
+    const inviteMessage = this.getInviteToken() ? "Você recebeu um convite. Entre com o mesmo e-mail que foi convidado para aceitá-lo." : message;
+
     if (cloud.getMode() === "setup") {
-      authContent.innerHTML = ui.renderCloudSetup(message);
+      authContent.innerHTML = ui.renderCloudSetup(inviteMessage);
       this.bindCloudConfigForm();
       return;
     }
 
     if (cloud.isCloudMode()) {
-      authContent.innerHTML = ui.renderCloudLogin(message, this.#lastAuthEmail);
+      authContent.innerHTML = ui.renderCloudLogin(inviteMessage, this.#lastAuthEmail);
       this.bindCloudLoginForm();
       return;
     }
@@ -150,6 +153,31 @@ class FinanceApp {
     });
   }
 
+  getInviteToken() {
+    try { return new URL(location.href).searchParams.get("invite") || ""; }
+    catch { return ""; }
+  }
+
+  clearInviteToken() {
+    const url = new URL(location.href);
+    url.searchParams.delete("invite");
+    history.replaceState({}, "", `${url.pathname}${url.search}${url.hash || "#/dashboard"}`);
+  }
+
+  async processPendingInvite() {
+    const token = this.getInviteToken();
+    if (!token || !cloud.getState().signedIn) return false;
+    try {
+      const accepted = await cloud.acceptInvite(token);
+      this.clearInviteToken();
+      ui.toast(`Convite aceito. Você entrou em ${accepted?.space_name || "um espaço compartilhado"}.`);
+      return true;
+    } catch (error) {
+      ui.toast(error.message || "Não foi possível aceitar o convite. Confirme se o e-mail da conta é o mesmo do convite.", "error");
+      return false;
+    }
+  }
+
   bindSetupForm() {
     const form = document.getElementById("auth-setup-form");
     form.addEventListener("submit", async (event) => {
@@ -192,9 +220,11 @@ class FinanceApp {
 
   unlock() {
     this.#authenticated = true;
+    this.applySettings();
     document.getElementById("auth-screen").classList.add("is-hidden");
     document.getElementById("app-shell").classList.remove("is-hidden");
     this.updateProfileUI();
+    this.updateWorkspaceUI();
     this.updateSyncUI(cloud.getState());
     this.#route = this.getRouteFromHash();
     this.renderRoute(this.#route);
@@ -251,6 +281,7 @@ class FinanceApp {
         container.focus({ preventScroll: true });
       }
       view.afterRender?.();
+      this.applyRoleUI();
 
       if (scrollPosition) {
         window.scrollTo(scrollPosition.x, scrollPosition.y);
@@ -312,6 +343,10 @@ class FinanceApp {
         if (action === "show-cloud-register") this.showCloudRegister("", authAction.dataset.email || "");
         if (action === "show-cloud-login") this.showCloudLogin("", authAction.dataset.email || "");
         if (action === "show-cloud-setup") this.showCloudSetup();
+        if (action === "google-login") {
+          try { await cloud.signInWithGoogle(); }
+          catch (error) { ui.toast(error.message || "Não foi possível entrar com o Google.", "error"); }
+        }
         if (action === "use-local-mode") {
           cloud.useLocalMode();
           this.initializeAuth();
@@ -347,6 +382,25 @@ class FinanceApp {
     });
     document.getElementById("mobile-menu").addEventListener("click", () => document.body.classList.add("mobile-menu-open"));
     document.getElementById("sidebar-backdrop").addEventListener("click", () => document.body.classList.remove("mobile-menu-open"));
+
+    const workspaceSwitcher = document.getElementById("workspace-switcher");
+    workspaceSwitcher?.addEventListener("change", async (event) => {
+      const select = event.currentTarget;
+      select.disabled = true;
+      try {
+        await cloud.switchWorkspace(select.value);
+        this.applySettings();
+        this.updateProfileUI();
+        this.updateWorkspaceUI();
+        this.renderRoute(this.#route);
+        ui.toast("Espaço financeiro alterado.");
+      } catch (error) {
+        ui.toast(error.message || "Não foi possível trocar de espaço.", "error");
+        this.updateWorkspaceUI();
+      } finally {
+        select.disabled = false;
+      }
+    });
 
     const syncStatus = document.getElementById("sync-status");
     syncStatus.addEventListener("click", async () => {
@@ -384,7 +438,8 @@ class FinanceApp {
     ui.addEventListener("ui:auth-reset", () => this.initializeAuth());
 
     storage.addEventListener("storage:error", () => ui.toast("O navegador não conseguiu salvar o cache local. Exporte um backup e libere espaço.", "error"));
-    cloud.addEventListener("auth:signed-in", () => {
+    cloud.addEventListener("auth:signed-in", async () => {
+      await this.processPendingInvite();
       this.unlock();
       ui.toast("Conta conectada e dados sincronizados.");
     });
@@ -397,6 +452,14 @@ class FinanceApp {
       }
       this.scheduleBackgroundRefresh(detail);
     });
+    cloud.addEventListener("workspace:changed", () => {
+      if (!this.#authenticated) return;
+      this.applySettings();
+      this.updateProfileUI();
+      this.updateWorkspaceUI();
+      this.applyRoleUI();
+    });
+    cloud.addEventListener("spaces:changed", () => this.updateWorkspaceUI());
     cloud.addEventListener("status", (event) => this.updateSyncUI(event.detail));
     cloud.addEventListener("queue:changed", () => this.updateSyncUI(cloud.getState()));
     cloud.addEventListener("error", (event) => {
@@ -486,8 +549,41 @@ class FinanceApp {
     const storageLabel = document.getElementById("sidebar-storage-label");
     if (storageLabel) {
       const state = cloud.getState();
-      storageLabel.textContent = state.signedIn ? "Nuvem + acesso offline" : state.mode === "local" ? "Somente neste dispositivo" : "Sincronização não configurada";
+      const roleLabels = { owner: "Proprietário", editor: "Editor", viewer: "Somente leitura" };
+      storageLabel.textContent = state.signedIn ? `${state.workspace?.name || "Nuvem"} • ${roleLabels[state.role] || "Membro"}` : state.mode === "local" ? "Somente neste dispositivo" : "Sincronização não configurada";
     }
+  }
+
+  updateWorkspaceUI() {
+    const wrapper = document.getElementById("workspace-control");
+    const select = document.getElementById("workspace-switcher");
+    const roleLabel = document.getElementById("workspace-role");
+    if (!wrapper || !select) return;
+    const state = cloud.getState();
+    if (!state.signedIn || !state.spaces?.length) {
+      wrapper.classList.add("is-hidden");
+      return;
+    }
+    wrapper.classList.remove("is-hidden");
+    select.innerHTML = state.spaces.map((space) => `<option value="${space.space_owner_id}">${escapeHTML(space.name)}${space.is_personal ? " — pessoal" : ""}</option>`).join("");
+    select.value = state.workspace?.space_owner_id || "";
+    const labels = { owner: "Proprietário", editor: "Editor", viewer: "Somente leitura" };
+    if (roleLabel) roleLabel.textContent = labels[state.role] || "Membro";
+  }
+
+  applyRoleUI() {
+    const readOnly = cloud.isCloudMode() && cloud.getState().signedIn && !cloud.canEdit();
+    document.body.classList.toggle("role-viewer", readOnly);
+    const globalCreate = document.querySelector('.topbar [data-action="new-transaction"]');
+    if (globalCreate) globalCreate.classList.toggle("is-hidden", readOnly);
+    if (!readOnly) return;
+    const selector = [
+      '[data-action^="new-"]', '[data-action^="edit-"]', '[data-action^="delete-"]',
+      '[data-action="save-settings"]', '[data-action="import-json"]', '[data-action="load-demo"]',
+      '[data-action="reset-data"]', '[data-action="choose-avatar"]', '[data-action="remove-avatar"]',
+      '[data-action="set-accent"]', '[data-action="cloud-backup"]'
+    ].join(",");
+    document.getElementById("page-container")?.querySelectorAll(selector).forEach((element) => element.classList.add("is-hidden"));
   }
 
   updateSyncUI(state = cloud.getState()) {

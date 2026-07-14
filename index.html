@@ -128,6 +128,10 @@
             <input id="global-search" type="search" placeholder="Buscar movimentação…" aria-label="Buscar movimentação">
             <kbd>/</kbd>
           </div>
+          <div id="workspace-control" class="workspace-control is-hidden">
+            <div class="workspace-control__meta"><span>Espaço financeiro</span><strong id="workspace-role">Proprietário</strong></div>
+            <select id="workspace-switcher" class="workspace-switcher" aria-label="Selecionar espaço financeiro"></select>
+          </div>
           <button id="sync-status" class="sync-status" type="button" data-status="setup" title="Configurar sincronização" aria-label="Estado da sincronização">
             <i aria-hidden="true"></i><span>Configurar nuvem</span>
           </button>
@@ -177,6 +181,6 @@
   <input id="avatar-input" class="visually-hidden" type="file" accept="image/png,image/jpeg,image/webp">
 
   <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.7/dist/chart.umd.min.js" crossorigin="anonymous"></script>
-  <script type="module" src="./js/app.js?v=2.2.0"></script>
+  <script type="module" src="./js/app.js?v=3.0.0"></script>
 </body>
 </html>
